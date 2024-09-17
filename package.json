@@ -71,7 +71,7 @@
     "@types/bluebird": "^3.5.37",
     "@types/chai": "^4.3.11",
     "@types/js-yaml": "^4.0.9",
-    "@types/mocha": "^10.0.6",
+    "@types/mocha": "^10.0.8",
     "@types/node": "^18.11.8 <18.19.9",
     "@types/nunjucks": "^3.2.2",
     "@types/sinon": "^17.0.3",

@@ -110,36 +110,18 @@ class PostRenderEscape {
           output += char;
         }
       } else if (state === STATE_SWIG_TAG) {
-        if (char === '%' && next_char === '}') { // From swig back to plain text
-          idx++;
-          if (swig_tag_name !== '' && str.includes(`end${swig_tag_name}`)) {
-            state = STATE_SWIG_FULL_TAG;
-          } else {
-            swig_tag_name = '';
-            state = STATE_PLAINTEXT;
-            output += PostRenderEscape.escapeContent(this.stored, 'swig', `{%${buffer}%}`);
-          }
+        const result = this.handleSwigTag(char, next_char, str, idx, buffer, swig_tag_name, swig_tag_name_begin, swig_tag_name_end,
+          state, swig_full_tag_start_buffer);
 
-          buffer = '';
-        } else {
-          buffer = buffer + char;
-          swig_full_tag_start_buffer = swig_full_tag_start_buffer + char;
+        idx = result.newIndex;
+        output += result.output;
+        buffer = result.buffer;
+        swig_tag_name = result.swig_tag_name;
+        swig_tag_name_begin = result.swig_tag_name_begin;
+        swig_tag_name_end = result.swig_tag_name_end;
+        state = result.state; // Actualizar state con el valor retornado
+        swig_full_tag_start_buffer = result.swig_full_tag_start_buffer; // Actualizar swig_full_tag_start_buffer
 
-          if (isNonWhiteSpaceChar(char)) {
-            if (!swig_tag_name_begin && !swig_tag_name_end) {
-              swig_tag_name_begin = true;
-            }
-
-            if (swig_tag_name_begin) {
-              swig_tag_name += char;
-            }
-          } else {
-            if (swig_tag_name_begin === true) {
-              swig_tag_name_begin = false;
-              swig_tag_name_end = true;
-            }
-          }
-        }
       } else if (state === STATE_SWIG_VAR) {
         if (char === '}' && next_char === '}') {
           idx++;
@@ -190,6 +172,55 @@ class PostRenderEscape {
 
     return output;
   }
+
+  handleSwigTag(char: string, next_char: string, str: string, idx: number, buffer: string, swig_tag_name: string, swig_tag_name_begin: boolean,
+    swig_tag_name_end: boolean, state: symbol, swig_full_tag_start_buffer: string):
+    { newIndex: number, output: string, buffer: string, swig_tag_name: string, swig_tag_name_begin: boolean,
+      swig_tag_name_end: boolean, state: symbol, swig_full_tag_start_buffer: string } {
+
+    let output = '';
+
+    if (char === '%' && next_char === '}') {
+      idx++;
+      if (swig_tag_name !== '' && str.includes(`end${swig_tag_name}`)) {
+        state = STATE_SWIG_FULL_TAG;
+      } else {
+        swig_tag_name = '';
+        state = STATE_PLAINTEXT;
+        output += PostRenderEscape.escapeContent(this.stored, 'swig', `{%${buffer}%}`);
+      }
+      buffer = '';
+    } else {
+      buffer += char;
+      swig_full_tag_start_buffer += char; // Actualizar swig_full_tag_start_buffer
+
+      if (isNonWhiteSpaceChar(char)) {
+        if (!swig_tag_name_begin && !swig_tag_name_end) {
+          swig_tag_name_begin = true;
+        }
+        if (swig_tag_name_begin) {
+          swig_tag_name += char;
+        }
+      } else {
+        if (swig_tag_name_begin === true) {
+          swig_tag_name_begin = false;
+          swig_tag_name_end = true;
+        }
+      }
+    }
+
+    return {
+      newIndex: idx,
+      output,
+      buffer,
+      swig_tag_name,
+      swig_tag_name_begin,
+      swig_tag_name_end,
+      state, // Devolver el valor de state actualizado
+      swig_full_tag_start_buffer // Devolver el valor actualizado de swig_full_tag_start_buffer
+    };
+  }
+
 }
 
 const prepareFrontMatter = (data: any, jsonMode: boolean) => {
