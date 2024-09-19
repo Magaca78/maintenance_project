@@ -69,25 +69,25 @@ class Console {
   register(name: string, desc: string, options: Option, fn: AnyFn): void
   register(name: string, desc: string | Option | AnyFn, options?: Option | AnyFn, fn?: AnyFn): void {
     if (!name) {
-        throw new TypeError('name is required');
+      throw new TypeError('name is required');
     }
 
     // Guard clause: Si no hay función, ajustamos las opciones y la función
     if (!fn) {
-        if (!options) {
-            if (typeof desc !== 'function') {
-                throw new TypeError('fn must be a function');
-            }
-            fn = desc;
-            options = {};
-            desc = '';
-        } else if (typeof options === 'function') {
-            fn = options;
-            options = typeof desc === 'object' ? desc : {};
-            desc = typeof desc === 'object' ? '' : desc;
-        } else {
-            throw new TypeError('fn must be a function');
+      if (!options) {
+        if (typeof desc !== 'function') {
+          throw new TypeError('fn must be a function');
         }
+        fn = desc;
+        options = {};
+        desc = '';
+      } else if (typeof options === 'function') {
+        fn = options;
+        options = typeof desc === 'object' ? desc : {};
+        desc = typeof desc === 'object' ? '' : desc;
+      } else {
+        throw new TypeError('fn must be a function');
+      }
     }
 
     // Promisificar si la función tiene más de un argumento
@@ -101,5 +101,8 @@ class Console {
 
     // Actualizar alias
     this.alias = abbrev(Object.keys(this.store));
+  }
 }
+
+export = Console;
 
