@@ -68,47 +68,38 @@ class Console {
   register(name: string, options: Option, fn: AnyFn): void
   register(name: string, desc: string, options: Option, fn: AnyFn): void
   register(name: string, desc: string | Option | AnyFn, options?: Option | AnyFn, fn?: AnyFn): void {
-    if (!name) throw new TypeError('name is required');
+    if (!name) {
+        throw new TypeError('name is required');
+    }
 
+    // Guard clause: Si no hay función, ajustamos las opciones y la función
     if (!fn) {
-      if (options) {
-        if (typeof options === 'function') {
-          fn = options;
-
-          if (typeof desc === 'object') { // name, options, fn
-            options = desc;
-            desc = '';
-          } else { // name, desc, fn
+        if (!options) {
+            if (typeof desc !== 'function') {
+                throw new TypeError('fn must be a function');
+            }
+            fn = desc;
             options = {};
-          }
+            desc = '';
+        } else if (typeof options === 'function') {
+            fn = options;
+            options = typeof desc === 'object' ? desc : {};
+            desc = typeof desc === 'object' ? '' : desc;
         } else {
-          throw new TypeError('fn must be a function');
+            throw new TypeError('fn must be a function');
         }
-      } else {
-        // name, fn
-        if (typeof desc === 'function') {
-          fn = desc;
-          options = {};
-          desc = '';
-        } else {
-          throw new TypeError('fn must be a function');
-        }
-      }
     }
 
-    if (fn.length > 1) {
-      fn = Promise.promisify(fn);
-    } else {
-      fn = Promise.method(fn);
-    }
+    // Promisificar si la función tiene más de un argumento
+    fn = fn.length > 1 ? Promise.promisify(fn) : Promise.method(fn);
 
+    // Almacenar la función en el store
     const c = fn as StoreFunction;
     this.store[name.toLowerCase()] = c;
     c.options = options as Option;
     c.desc = desc as string;
 
+    // Actualizar alias
     this.alias = abbrev(Object.keys(this.store));
-  }
 }
 
-export = Console;
