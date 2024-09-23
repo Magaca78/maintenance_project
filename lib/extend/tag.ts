@@ -178,7 +178,9 @@ class NunjucksError extends Error {
 const formatNunjucksError = (err: Error, input: string, source = ''): Error => {
   err.message = err.message.replace('(unknown path)', source ? magenta(source) : '');
 
-  const match = err.message.match(/Line (\d+), Column \d+/);
+  const regex = /Line (\d+), Column \d+/;
+  const match = regex.exec(err.message);
+  
   if (!match) return err;
   const errLine = parseInt(match[1], 10);
   if (isNaN(errLine)) return err;
